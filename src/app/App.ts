@@ -51,14 +51,16 @@ export class App {
     this.model.state = GameState.RequestingPermission;
     this.ui.showState(this.model.state);
     try {
-      const permission = await this.tilt.requestPermission();
+      this.audio.reset();
+      const [permission] = await Promise.all([
+        this.tilt.requestPermission(),
+        this.audio.start(),
+      ]);
       if (permission !== 'granted') throw new Error('Motion access is required. Allow motion and orientation access, then try again.');
       const hasReading = await this.tilt.waitForReading();
       if (!hasReading || !this.tilt.calibrate()) {
         throw new Error('No tilt sensor data was received. Open this game on a phone and make sure motion access is enabled.');
       }
-      await this.audio.start();
-      this.audio.setPaused(true);
       this.game.reset();
       this.model.beginCountdown();
       this.ui.updateMetrics(0, 0, 0);

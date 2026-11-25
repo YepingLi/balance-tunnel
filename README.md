@@ -45,7 +45,13 @@ The production files are generated in `dist/` and can be deployed to any static 
 - Tilt left/right and forward/backward to move.
 - **Pause/Resume** freezes or continues the run without recalibration.
 - **Restart** starts a new run and recalibrates.
-- **Sound On/Off** changes generated music and effects.
+- **Sound On/Off** controls background music and game effects.
+
+## Background music
+
+The game loops **Swim With Me at LoveQuay (National Anthem of LoveQuay Republic)** by [hydraulist](https://www.youtube.com/channel/UCp4iPXrWZ1ct2_wVBqZo2fw), used with the creator's permission. [Original video](https://www.youtube.com/watch?v=FMgtmZwrV4s).
+
+The approximately one-minute track is bundled as `public/audio/swim-with-me-at-lovequay.mp3` and cached for offline play. Music starts after the countdown, pauses and resumes with the game, and restarts from the beginning for each new run. Score and collision effects are generated with the Web Audio API.
 
 ## Data
 
@@ -55,7 +61,7 @@ Only the high score and sound preference are saved in browser local storage. The
 
 ```text
 src/app       app lifecycle, state, and configuration
-src/audio     generated soundtrack and score sounds
+src/audio     background music playback and generated game effects
 src/game      Three.js tunnel, player, scoring balls, obstacles, spawning
 src/input     motion permission, calibration, filtering, axis mapping
 src/logic     tested pure game, tilt, and spawn rules
