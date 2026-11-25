@@ -15,7 +15,7 @@ describe('PWA files', () => {
 
   it('has an offline service worker shell', () => {
     const worker = readFileSync(resolve('public/sw.js'), 'utf8');
-    expect(worker).toContain("balance-tunnel-v2");
+    expect(worker).toContain("balance-tunnel-v3");
     expect(worker).toContain("addEventListener('fetch'");
   });
 });

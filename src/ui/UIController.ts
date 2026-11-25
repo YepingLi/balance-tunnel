@@ -18,6 +18,7 @@ export class UIController {
   private deviceMessage = required<HTMLElement>('device-message');
   private impactFlash = required<HTMLElement>('impact-flash');
   private scorePop = required<HTMLElement>('score-pop');
+  private audioDialog = required<HTMLDialogElement>('audio-settings');
   private callbacks: Array<() => void> = [];
 
   bind(actions: {
@@ -25,16 +26,34 @@ export class UIController {
     pause: Handler;
     resume: Handler;
     restart: Handler;
+    openAudio: Handler;
     toggleSound: Handler;
+    setMusicVolume: (volume: number) => void;
+    setEffectsVolume: (volume: number) => void;
   }): void {
     this.on('start-button', actions.start);
     this.on('pause-button', actions.pause);
     this.on('resume-button', actions.resume);
     this.on('restart-button', actions.restart);
     this.on('game-over-restart', actions.restart);
-    this.on('start-sound-button', actions.toggleSound);
-    this.on('hud-sound-button', actions.toggleSound);
-    this.on('game-over-sound', actions.toggleSound);
+    ['start-sound-button', 'hud-sound-button', 'pause-sound-button', 'game-over-sound'].forEach((id) => this.on(id, actions.openAudio));
+    this.on('audio-close', () => this.audioDialog.close());
+    this.on('audio-mute-button', actions.toggleSound);
+    this.onVolume('music-volume', actions.setMusicVolume);
+    this.onVolume('effects-volume', actions.setEffectsVolume);
+    const onClose = (): void => {
+      if (this.pauseScreen.classList.contains('active')) required('resume-button').focus();
+    };
+    this.audioDialog.addEventListener('close', onClose);
+    this.callbacks.push(() => this.audioDialog.removeEventListener('close', onClose));
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.audioDialog.close();
+      }
+    };
+    this.audioDialog.addEventListener('keydown', onKeyDown);
+    this.callbacks.push(() => this.audioDialog.removeEventListener('keydown', onKeyDown));
   }
 
   showState(state: GameState): void {
@@ -64,11 +83,26 @@ export class UIController {
   setCountdown(value: string): void { required('countdown-value').textContent = value; }
 
   setSound(enabled: boolean): void {
-    const label = enabled ? 'Sound On' : 'Sound Off';
-    ['start-sound-button', 'hud-sound-button', 'game-over-sound'].forEach((id) => {
-      required<HTMLButtonElement>(id).textContent = label;
-      required<HTMLButtonElement>(id).setAttribute('aria-pressed', String(enabled));
+    ['start-sound-button', 'hud-sound-button', 'pause-sound-button', 'game-over-sound'].forEach((id) => {
+      required<HTMLButtonElement>(id).textContent = enabled ? 'Audio' : 'Audio (muted)';
     });
+    const mute = required<HTMLButtonElement>('audio-mute-button');
+    mute.textContent = enabled ? 'Mute all' : 'Unmute all';
+    mute.setAttribute('aria-pressed', String(!enabled));
+  }
+
+  showAudioSettings(): void {
+    if (!this.audioDialog.open) this.audioDialog.showModal();
+  }
+
+  setVolumes(music: number, effects: number): void {
+    for (const [id, volume] of [['music', music], ['effects', effects]] as const) {
+      const percentage = String(Math.round(volume * 100));
+      const slider = required<HTMLInputElement>(`${id}-volume`);
+      slider.value = percentage;
+      slider.setAttribute('aria-valuetext', `${percentage}%`);
+      required<HTMLOutputElement>(`${id}-volume-value`).value = `${percentage}%`;
+    }
   }
 
   setBusy(busy: boolean): void {
@@ -108,6 +142,13 @@ export class UIController {
     const listener = (): void => { void handler(); };
     element.addEventListener('click', listener);
     this.callbacks.push(() => element.removeEventListener('click', listener));
+  }
+
+  private onVolume(id: string, handler: (volume: number) => void): void {
+    const slider = required<HTMLInputElement>(id);
+    const listener = (): void => handler(slider.valueAsNumber / 100);
+    slider.addEventListener('input', listener);
+    this.callbacks.push(() => slider.removeEventListener('input', listener));
   }
 
   private formatTime(seconds: number): string {

@@ -1,4 +1,4 @@
-const CACHE = 'balance-tunnel-v2';
+const CACHE = 'balance-tunnel-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './audio/swim-with-me-at-lovequay.mp3'];
 
 self.addEventListener('install', (event) => {

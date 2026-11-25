@@ -10,7 +10,9 @@ export class App {
   private storage = new LocalStorageStore();
   private model = new GameModel(this.storage.getHighScore());
   private tilt = new TiltController();
-  private audio = new AudioEngine(this.storage.getSoundEnabled());
+  private audio = new AudioEngine(
+    this.storage.getSoundEnabled(), this.storage.getMusicVolume(), this.storage.getEffectsVolume(),
+  );
   private ui = new UIController();
   private game: Game;
   private animationFrame = 0;
@@ -29,9 +31,21 @@ export class App {
       pause: () => this.togglePause(),
       resume: () => this.resume(),
       restart: () => this.startRun(),
+      openAudio: () => { this.pause(); this.ui.showAudioSettings(); },
       toggleSound: () => this.toggleSound(),
+      setMusicVolume: (volume) => {
+        this.audio.setMusicVolume(volume);
+        this.storage.setMusicVolume(this.audio.getMusicVolume());
+        this.ui.setVolumes(this.audio.getMusicVolume(), this.audio.getEffectsVolume());
+      },
+      setEffectsVolume: (volume) => {
+        this.audio.setEffectsVolume(volume);
+        this.storage.setEffectsVolume(this.audio.getEffectsVolume());
+        this.ui.setVolumes(this.audio.getMusicVolume(), this.audio.getEffectsVolume());
+      },
     });
     this.ui.setSound(this.audio.isEnabled());
+    this.ui.setVolumes(this.audio.getMusicVolume(), this.audio.getEffectsVolume());
     this.ui.updateResults(0, 0, 0, this.model.highScore, false);
     this.ui.showState(GameState.Start);
     this.updateDeviceGuidance();

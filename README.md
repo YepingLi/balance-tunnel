@@ -45,7 +45,8 @@ The production files are generated in `dist/` and can be deployed to any static 
 - Tilt left/right and forward/backward to move.
 - **Pause/Resume** freezes or continues the run without recalibration.
 - **Restart** starts a new run and recalibrates.
-- **Sound On/Off** controls background music and game effects.
+- **Audio** opens separate 0–100% sliders for background music and sound effects. Opening it during play pauses the game; close it and tap Resume to continue.
+- **Mute all** silences both channels without changing their saved levels. These controls affect only this game's audio, independently of the phone's system volume.
 
 ## Background music
 
@@ -55,7 +56,7 @@ The approximately one-minute track is bundled as `public/audio/swim-with-me-at-l
 
 ## Data
 
-Only the high score and sound preference are saved in browser local storage. The game has no backend, account, analytics, or personal-data collection.
+Only the high score, mute preference, and separate music/effects volume levels are saved in browser local storage. The game has no backend, account, analytics, or personal-data collection.
 
 ## Project structure
 

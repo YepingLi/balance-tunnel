@@ -10,6 +10,9 @@ export class AudioEngine {
   private analyser: AnalyserNode | null = null;
   private frequencyData: Uint8Array<ArrayBuffer> | null = null;
   private musicGain: GainNode | null = null;
+  private effectsGain: GainNode | null = null;
+  private musicVolume = 0.6;
+  private effectsVolume = 1;
   private musicBuffer: AudioBuffer | null = null;
   private musicLoad: Promise<AudioBuffer> | null = null;
   private musicSource: AudioBufferSourceNode | null = null;
@@ -19,8 +22,10 @@ export class AudioEngine {
   private paused = true;
   private smoothedEnergy = 0.15;
 
-  constructor(enabled: boolean) {
+  constructor(enabled: boolean, musicVolume = 0.6, effectsVolume = 1) {
     this.enabled = enabled;
+    this.setMusicVolume(musicVolume);
+    this.setEffectsVolume(effectsVolume);
   }
 
   async start(): Promise<void> {
@@ -58,6 +63,22 @@ export class AudioEngine {
 
   isEnabled(): boolean { return this.enabled; }
 
+  getMusicVolume(): number { return this.musicVolume; }
+
+  getEffectsVolume(): number { return this.effectsVolume; }
+
+  setMusicVolume(volume: number): void {
+    if (!Number.isFinite(volume)) return;
+    this.musicVolume = clamp01(volume);
+    this.setChannelGain(this.musicGain, this.musicVolume);
+  }
+
+  setEffectsVolume(volume: number): void {
+    if (!Number.isFinite(volume)) return;
+    this.effectsVolume = clamp01(volume);
+    this.setChannelGain(this.effectsGain, this.effectsVolume);
+  }
+
   score(value: 1 | 5 | 10): void {
     if (this.paused || !this.enabled || !this.context || !this.master) return;
     const notes = value === 1 ? [880] : value === 5 ? [660, 990] : [660, 990, 1320];
@@ -92,6 +113,7 @@ export class AudioEngine {
     this.analyser = null;
     this.frequencyData = null;
     this.musicGain = null;
+    this.effectsGain = null;
     this.musicBuffer = null;
     this.musicLoad = null;
   }
@@ -101,8 +123,11 @@ export class AudioEngine {
     this.master = this.context.createGain();
     this.master.gain.value = this.enabled ? AudioEngine.PLAYING_GAIN : 0;
     this.musicGain = this.context.createGain();
-    this.musicGain.gain.value = 0.6;
+    this.musicGain.gain.value = this.musicVolume;
     this.musicGain.connect(this.master);
+    this.effectsGain = this.context.createGain();
+    this.effectsGain.gain.value = this.effectsVolume;
+    this.effectsGain.connect(this.master);
     this.analyser = this.context.createAnalyser();
     this.analyser.fftSize = 128;
     this.analyser.smoothingTimeConstant = 0.84;
@@ -144,7 +169,7 @@ export class AudioEngine {
   }
 
   private tone(frequency: number, delay: number, duration: number, type: OscillatorType, volume: number, endFrequency?: number): void {
-    if (!this.context || !this.master) return;
+    if (!this.context || !this.effectsGain || this.effectsVolume === 0) return;
     const now = this.context.currentTime + delay;
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
@@ -154,15 +179,18 @@ export class AudioEngine {
     gain.gain.setValueAtTime(0.0001, now);
     gain.gain.exponentialRampToValueAtTime(volume, now + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    oscillator.connect(gain).connect(this.master);
+    oscillator.connect(gain).connect(this.effectsGain);
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
   }
 
   private applyGain(target: number): void {
-    if (!this.context || !this.master) return;
-    const value = this.enabled ? target : 0;
-    this.master.gain.cancelScheduledValues(this.context.currentTime);
-    this.master.gain.setTargetAtTime(value, this.context.currentTime, 0.035);
+    this.setChannelGain(this.master, this.enabled ? target : 0);
+  }
+
+  private setChannelGain(channel: GainNode | null, volume: number): void {
+    if (!this.context || !channel) return;
+    channel.gain.cancelScheduledValues(this.context.currentTime);
+    channel.gain.setTargetAtTime(volume, this.context.currentTime, 0.035);
   }
 }

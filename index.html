@@ -26,7 +26,7 @@
         <div class="hud-actions">
           <button id="pause-button" class="icon-button" type="button">Pause</button>
           <button id="restart-button" class="icon-button" type="button">Restart</button>
-          <button id="hud-sound-button" class="icon-button" type="button">Sound On</button>
+          <button id="hud-sound-button" class="icon-button" type="button" aria-haspopup="dialog" aria-controls="audio-settings">Audio</button>
         </div>
       </header>
 
@@ -44,7 +44,7 @@
           <p id="device-message" class="device-message">For the best experience, rotate your phone to landscape.</p>
           <div class="primary-actions">
             <button id="start-button" class="primary-button" type="button">Start</button>
-            <button id="start-sound-button" class="secondary-button" type="button">Sound On</button>
+            <button id="start-sound-button" class="secondary-button" type="button" aria-haspopup="dialog" aria-controls="audio-settings">Audio</button>
           </div>
           <p class="best-line">Best score <strong id="start-best">0</strong></p>
           <p id="install-note" class="install-note">Install from your browser menu to play full-screen from your home screen.</p>
@@ -65,6 +65,7 @@
           <p class="eyebrow">Run paused</p>
           <h2>Stay balanced</h2>
           <button id="resume-button" class="primary-button" type="button">Resume</button>
+          <button id="pause-sound-button" class="secondary-button" type="button" aria-haspopup="dialog" aria-controls="audio-settings">Audio</button>
         </div>
       </section>
 
@@ -81,10 +82,40 @@
           </div>
           <div class="primary-actions">
             <button id="game-over-restart" class="primary-button" type="button">Restart</button>
-            <button id="game-over-sound" class="secondary-button" type="button">Sound On</button>
+            <button id="game-over-sound" class="secondary-button" type="button" aria-haspopup="dialog" aria-controls="audio-settings">Audio</button>
           </div>
         </div>
       </section>
+
+      <dialog id="audio-settings" class="audio-dialog" aria-labelledby="audio-title" aria-describedby="audio-help">
+        <header class="audio-header">
+          <div>
+            <p class="eyebrow">Your mix</p>
+            <h2 id="audio-title">Sound settings</h2>
+          </div>
+          <button id="audio-close" class="icon-button" type="button" aria-label="Close audio settings">Done</button>
+        </header>
+        <p id="audio-help" class="audio-help">Only affects this game's audio.</p>
+        <div class="volume-control">
+          <div class="volume-label">
+            <label for="music-volume">Background music</label>
+            <output id="music-volume-value" for="music-volume">60%</output>
+          </div>
+          <input id="music-volume" type="range" min="0" max="100" step="1" value="60" />
+        </div>
+        <div class="volume-control">
+          <div class="volume-label">
+            <label for="effects-volume">Sound effects</label>
+            <output id="effects-volume-value" for="effects-volume">100%</output>
+          </div>
+          <input id="effects-volume" type="range" min="0" max="100" step="1" value="100" />
+          <p class="audio-help">Score and collision sounds</p>
+        </div>
+        <footer class="audio-footer">
+          <button id="audio-mute-button" class="secondary-button" type="button" aria-pressed="false">Mute all</button>
+          <span class="audio-help">Settings saved automatically</span>
+        </footer>
+      </dialog>
 
       <div id="portrait-overlay" class="portrait-overlay">
         <div class="phone-icon" aria-hidden="true"></div>

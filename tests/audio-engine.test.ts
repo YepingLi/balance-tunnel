@@ -9,7 +9,7 @@ const parameter = () => ({
   setTargetAtTime: vi.fn(),
 });
 
-const node = () => ({ connect: vi.fn().mockReturnThis(), disconnect: vi.fn() });
+const node = () => ({ connect: vi.fn((destination: unknown) => destination), disconnect: vi.fn() });
 const gainNode = () => ({ ...node(), gain: parameter() });
 const bufferSource = () => ({ ...node(), buffer: null, loop: false, start: vi.fn(), stop: vi.fn() });
 const oscillatorNode = () => ({ ...node(), frequency: parameter(), type: 'sine', start: vi.fn(), stop: vi.fn() });
@@ -127,5 +127,46 @@ describe('background music playback', () => {
     audio.setPaused(false);
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(context.sources).toHaveLength(1);
+  });
+
+  it('routes music and effects through independent volume controls', async () => {
+    audio.setMusicVolume(0.25);
+    audio.setEffectsVolume(0.8);
+    await audio.start();
+    expect(context.gains[1].gain.value).toBe(0.25);
+    expect(context.gains[2].gain.value).toBe(0.8);
+
+    audio.setPaused(false);
+    audio.setMusicVolume(0);
+    audio.score(1);
+    expect(context.sources[0].connect).toHaveBeenCalledWith(context.gains[1]);
+    expect(context.gains[1].gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 0, 0.035);
+    expect(context.gains[2].gain.setTargetAtTime).not.toHaveBeenCalled();
+    expect(context.gains[3].connect).toHaveBeenCalledWith(context.gains[2]);
+    expect(context.oscillators).toHaveLength(1);
+
+    audio.setEffectsVolume(0);
+    audio.setMusicVolume(0.9);
+    audio.score(10);
+    expect(context.gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 0, 0.035);
+    expect(audio.getMusicVolume()).toBe(0.9);
+    expect(audio.getEffectsVolume()).toBe(0);
+    expect(context.sources).toHaveLength(1);
+    expect(context.sources[0].stop).not.toHaveBeenCalled();
+    expect(context.oscillators).toHaveLength(1);
+  });
+
+  it('keeps channel levels when muting and restoring all audio', async () => {
+    audio = new AudioEngine(true, 0.4, 0.7);
+    await audio.start();
+    audio.setEnabled(false);
+    audio.setMusicVolume(0.2);
+    expect(context.gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 0, 0.035);
+    audio.setEnabled(true);
+    expect(context.gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.82, 0, 0.035);
+    expect(audio.getMusicVolume()).toBe(0.2);
+    expect(audio.getEffectsVolume()).toBe(0.7);
+    expect(context.gains[1].gain.setTargetAtTime).toHaveBeenLastCalledWith(0.2, 0, 0.035);
+    expect(context.gains[2].gain.value).toBe(0.7);
   });
 });
