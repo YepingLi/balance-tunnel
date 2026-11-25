@@ -6,7 +6,7 @@ Hold a phone in landscape and tilt in two dimensions. A centered phone follows t
 
 ## Game Link
 
-Play the game here: [Balance Tunnel](https://fangningzhang81.github.io/balance-tunnel/)
+Play the game here: [Balance Tunnel](https://yepingli.github.io/balance-tunnel/)
 
 ## Requirements
 
